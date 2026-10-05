@@ -1,0 +1,11 @@
+{
+  "schemaVersion": 1,
+  "id": "seedcrackerx-gametest",
+  "version": "1.0.0",
+  "name": "SeedCrackerX gametests",
+  "environment": "client",
+  "entrypoints": {
+    "fabric-client-gametest": ["kaptainwutax.seedcrackerX.gametest.StructureHighlightTest", "kaptainwutax.seedcrackerX.gametest.HashedSeedCrackGameTest"]
+  },
+  "depends": { "seedcrackerx": "*" }
+}

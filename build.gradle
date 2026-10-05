@@ -98,3 +98,14 @@ java {
 	sourceCompatibility = JavaVersion.VERSION_25
 	targetCompatibility = JavaVersion.VERSION_25
 }
+
+// client gametests: runs a real client + dedicated server (./gradlew runClientGameTest)
+fabricApi {
+	configureTests {
+		createSourceSet = true
+		modId = "seedcrackerx-gametest"
+		enableGameTests = false
+		enableClientGameTests = true
+		eula = true
+	}
+}
