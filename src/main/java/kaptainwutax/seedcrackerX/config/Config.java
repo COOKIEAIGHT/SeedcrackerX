@@ -39,6 +39,7 @@ public class Config {
     public FeatureToggle biome = new FeatureToggle(false);
     public RenderType render = RenderType.XRAY;
     public boolean active = true;
+    public boolean hud = true; // on-screen panel
     public boolean debug = false;
     public boolean antiXrayBypass = true;
     private MCVersion version = MCVersion.latest();

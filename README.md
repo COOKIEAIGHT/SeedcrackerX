@@ -133,52 +133,28 @@ You have to find 5 (or more) end cities (fill up regular bits) and then return t
 If version of your mod is older than 2.13.1, use prefix
  - `/seed` instead of `/seedcracker`
 
-  ### GUI Command
-  - `/seedcracker gui`
-  
-  Opens the config gui where you can modify settings like the server mc-version, all finders, database and rendermode.
-  There are command alternatives for most of this, but they shouldn't be used anymore.
-  
-  ### Finder Reload Command
-  - `/seedcracker finder reload`
+Typing `/seedcracker` on its own shows where the cracker is at and a row of clickable commands.
 
-  Rescans the loaded Chunks to find structures that weren't found before.
-
-  ### Data Command
-  - `/seedcracker data clear`
-  
-  Clears all the collected data without requiring a relog. This is useful for multi-world servers.
-  
-  - `/seedcracker data bits`
-  
-  Display how many bits of information have been collected.
-  Normal bits are used for end pillar + structure cracking. Cracking starts at 32 bits.
-  Lifting bits are used for liftable structure cracking. Cracking starts at 40 bits.
-  
-  - `/seed data restore`
-  
-  When you leave a world, the mod will save currently collected structure information in a file of the .minecraft/config directory.
-  After rejoining, you can restore it with this command.
-  
-  
-  ### Debug Command
-  - `/seedcracker cracker debug`
-
-  Additional info is shown
-  
-  ### Database Command
-  - `/seedcracker database`
-  
-  Opens a [google sheet](https://docs.google.com/spreadsheets/d/1tuQiE-0leW88em9OHbZnH-RFNhVqgoHhIt9WQbeqqWw/edit?usp=sharing) that is maintained by the mod
-  
-  ### Version Command
-  - `/seedcracker version`
-  - `/seedcracker version <version>`
-
-  Shows or sets the Minecraft version of the server, from 1.8 to 26.3 (also in the config screen). 1.21.4 to 26.3 use the same structure rules as 1.21.3.
+| Command | What it does |
+|---|---|
+| `/seedcracker status` | Current stage, structures found, possible seeds left, hashed seed |
+| `/seedcracker seed` | Shows the world seed once it's found (click to copy) |
+| `/seedcracker menu` | Opens the config screen (also the `J` key, rebindable in Controls) |
+| `/seedcracker hud` | Turns the on-screen progress panel on/off |
+| `/seedcracker restore` | Loads the structures saved from your last session on this server (also happens automatically when you join) |
+| `/seedcracker clear` | Clears all collected data |
+| `/seedcracker rescan` | Rescans the loaded chunks for structures that weren't found before |
+| `/seedcracker render off\|on\|xray` | Structure outlines: off, on (hidden behind blocks) or xray (through walls) |
+| `/seedcracker finder` | Lists the finders; `/seedcracker finder <name> on\|off` toggles one |
+| `/seedcracker on` / `off` | Turns the mod on or off |
+| `/seedcracker debug` | Toggles extra debug messages in chat |
+| `/seedcracker version [version]` | Shows or sets the server version, 1.8 to 26.3 (also in the config screen). 1.21.4 to 26.3 use the same structure rules as 1.21.3 |
+| `/seedcracker database` | Opens a [google sheet](https://docs.google.com/spreadsheets/d/1tuQiE-0leW88em9OHbZnH-RFNhVqgoHhIt9WQbeqqWw/edit?usp=sharing) that is maintained by the mod |
+| `/seedcracker help` | Lists all commands |
 
   ### Hashed seed
-  Servers send the client a hashed version of the world seed. Once the structure seed candidates are known, every candidate is checked against it (multi-threaded), so cracking no longer needs to get below 1000 candidates first.
+
+  Servers send the client a hashed version of the world seed. Once the structure seed candidates are known, the mod checks every candidate against it (multi-threaded), so it no longer needs to get below 1000 candidates first.
 
 ## Video Tutorials
 

@@ -29,7 +29,7 @@ public abstract class ClientCommand {
         this.build(builder);
         LiteralArgumentBuilder<FabricClientCommandSource> seedCrackerRootCommand = literal(ClientCommands.PREFIX)
         .executes(context -> {
-            Log.error("Error: please enter a valid seedcracker command");
+            HelpText.overview(); // show status + clickable commands instead of an error
             return 1;
         });
         dispatcher.register(seedCrackerRootCommand.then(builder));

@@ -46,7 +46,11 @@ public abstract class ClientPacketListenerMixin {
         tryDatabase();
         var preloaded = StructureSave.loadStructures();
         if (!preloaded.isEmpty()) {
-            Log.warn("foundRestorableStructures", preloaded.size());
+            // load the structures from last time automatically (no /seedcracker data restore needed)
+            for (com.seedfinding.mcfeature.structure.RegionStructure.Data<?> data : preloaded) {
+                SeedCracker.get().getDataStorage().addBaseData(data, DataAddedEvent.POKE_LIFTING);
+            }
+            Log.warn("data.autoRestored", preloaded.size());
         }
     }
 

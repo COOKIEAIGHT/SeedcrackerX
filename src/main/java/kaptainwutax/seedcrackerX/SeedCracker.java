@@ -37,6 +37,15 @@ public class SeedCracker implements ModInitializer {
         // make outlines work with Iris shaders
         kaptainwutax.seedcrackerX.render.NoDepthLayer.registerWithIris();
 
+        // hotkey to open the menu
+        kaptainwutax.seedcrackerX.init.SeedCrackerKeys.register();
+
+        // on-screen progress panel
+        net.fabricmc.fabric.api.client.rendering.v1.hud.HudElementRegistry.attachElementBefore(
+                net.fabricmc.fabric.api.client.rendering.v1.hud.VanillaHudElements.CHAT,
+                net.minecraft.resources.Identifier.fromNamespaceAndPath("seedcrackerx", "progress_panel"),
+                kaptainwutax.seedcrackerX.render.CrackerHud::render);
+
         ClientCommandRegistrationCallback.EVENT.register((dispatcher, registryAccess) -> ClientCommands.registerCommands(dispatcher));
 
         Database.fetchSeeds();

@@ -3,69 +3,60 @@ package kaptainwutax.seedcrackerX.command;
 import com.mojang.brigadier.builder.LiteralArgumentBuilder;
 import kaptainwutax.seedcrackerX.config.Config;
 import kaptainwutax.seedcrackerX.finder.Finder;
-import kaptainwutax.seedcrackerX.finder.ReloadFinders;
 import kaptainwutax.seedcrackerX.util.Log;
 import net.fabricmc.fabric.api.client.command.v2.FabricClientCommandSource;
 import net.minecraft.ChatFormatting;
+import net.minecraft.network.chat.ClickEvent;
+import net.minecraft.network.chat.Component;
+import net.minecraft.network.chat.HoverEvent;
+import net.minecraft.network.chat.MutableComponent;
 
-import static net.fabricmc.fabric.api.client.command.v2.ClientCommands.*;
+import static net.fabricmc.fabric.api.client.command.v2.ClientCommands.literal;
 
+/**
+ * /seedcracker finder lists what it looks for (click to toggle),
+ * /seedcracker finder shipwreck on|off turns one on or off.
+ */
 public class FinderCommand extends ClientCommand {
-    ReloadFinders reloadFinders = new ReloadFinders();
 
     @Override
     public String getName() {
         return "finder";
     }
 
+    public static String id(Finder.Type type) {
+        return type.name().toLowerCase();
+    }
+
     @Override
     public void build(LiteralArgumentBuilder<FabricClientCommandSource> builder) {
-        for (Finder.Type finderType : Finder.Type.values()) {
-            builder.then(literal("type")
-                    .then(literal(finderType.toString())
-                            .then(literal("ON").executes(context -> this.setFinderType(finderType, true, true)))
-                            .then(literal("OFF").executes(context -> this.setFinderType(finderType, false, true)))
-                            .executes(context -> this.printFinderType(finderType)))
-            );
+        builder.executes(context -> this.list());
+        for (Finder.Type type : Finder.Type.values()) {
+            builder.then(literal(id(type))
+                    .then(literal("on").executes(context -> this.set(type, true)))
+                    .then(literal("off").executes(context -> this.set(type, false)))
+                    .executes(context -> this.set(type, !type.enabled.get())));
         }
-
-        for (Finder.Category finderCategory : Finder.Category.values()) {
-            builder.then(literal("category")
-                    .then(literal(finderCategory.toString())
-                            .then(literal("ON").executes(context -> this.setFinderCategory(finderCategory, true)))
-                            .then(literal("OFF").executes(context -> this.setFinderCategory(finderCategory, false)))
-                            .executes(context -> this.printFinderCategory(finderCategory)))
-            );
-        }
-        builder.then(literal("reload").executes(context -> this.reload()));
     }
 
-    private int printFinderCategory(Finder.Category finderCategory) {
-        Finder.Type.getForCategory(finderCategory).forEach(this::printFinderType);
+    private int list() {
+        Log.send(Component.literal("Looking for (click to turn on/off):").withStyle(ChatFormatting.GREEN));
+        for (Finder.Type type : Finder.Type.values()) {
+            boolean on = type.enabled.get();
+            String cmd = "/seedcracker finder " + id(type) + (on ? " off" : " on");
+            MutableComponent line = Component.literal(on ? " [ON]  " : " [OFF] ").withStyle(on ? ChatFormatting.GREEN : ChatFormatting.RED)
+                    .append(Component.literal(Log.translate(type.nameKey)).withStyle(ChatFormatting.WHITE))
+                    .withStyle(st -> st.withClickEvent(new ClickEvent.SuggestCommand(cmd))
+                            .withHoverEvent(new HoverEvent.ShowText(Component.literal(cmd))));
+            Log.send(line);
+        }
         return 0;
     }
 
-    private int printFinderType(Finder.Type finderType) {
-        sendFeedback(Log.translate("finder.isFinder").formatted(Log.translate(finderType.nameKey)) + " [" + String.valueOf(finderType.enabled.get()).toUpperCase() + "].", ChatFormatting.AQUA);
-        return 0;
-    }
-
-    private int setFinderCategory(Finder.Category finderCategory, boolean flag) {
-        Finder.Type.getForCategory(finderCategory).forEach(finderType -> this.setFinderType(finderType, flag, false));
+    private int set(Finder.Type type, boolean on) {
+        type.enabled.set(on);
         Config.save();
+        sendFeedback(Log.translate(type.nameKey) + ": " + (on ? "ON" : "OFF"), on ? ChatFormatting.GREEN : ChatFormatting.YELLOW);
         return 0;
     }
-
-    private int setFinderType(Finder.Type finderType, boolean flag, boolean save) {
-        finderType.enabled.set(flag);
-        if (save) Config.save();
-        sendFeedback(Log.translate("finder.setFinder").formatted(Log.translate(finderType.nameKey)) + " [" + String.valueOf(flag).toUpperCase() + "].", ChatFormatting.AQUA);
-        return 0;
-    }
-
-    private int reload() {
-        reloadFinders.reload();
-        return 0;
-    }
-
 }

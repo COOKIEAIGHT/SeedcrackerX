@@ -14,8 +14,28 @@ import java.util.regex.Pattern;
 
 public class Log {
 
+    // debug lines only show when debug messages are turned on
     public static void debug(String message) {
+        if (kaptainwutax.seedcrackerX.config.Config.get().debug) {
+            sendMessage(Component.literal(message));
+        }
+    }
+
+    // always shown, plain text
+    public static void info(String message) {
         sendMessage(Component.literal(message));
+    }
+
+    // like warn(), but only when debug messages are on (keeps chat tidy, the panel shows progress)
+    public static void verbose(String translateKey, Object... args) {
+        if (kaptainwutax.seedcrackerX.config.Config.get().debug) {
+            warn(translateKey, args);
+        }
+    }
+
+    // send any chat component
+    public static void send(Component component) {
+        sendMessage(component);
     }
 
     public static void warn(String translateKey, Object... args) {

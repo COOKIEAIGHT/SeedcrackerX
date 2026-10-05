@@ -19,6 +19,7 @@ import kaptainwutax.seedcrackerX.cracker.FastHashedSeedSearch;
 import kaptainwutax.seedcrackerX.cracker.decorator.Decorator;
 import kaptainwutax.seedcrackerX.util.Database;
 import kaptainwutax.seedcrackerX.util.Log;
+import net.fabricmc.loader.api.FabricLoader;
 import net.minecraft.client.Minecraft;
 import net.minecraft.network.chat.Component;
 import net.minecraft.world.level.levelgen.WorldgenRandom;
@@ -26,6 +27,10 @@ import net.minecraft.world.level.levelgen.XoroshiroRandomSource;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.StandardOpenOption;
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
@@ -48,6 +53,14 @@ public class TimeMachine {
     public List<Integer> pillarSeeds = null;
     public Set<Long> structureSeeds = new HashSet<>();
     public Set<Long> worldSeeds = new HashSet<>();
+
+    // status for the on-screen panel (CrackerHud)
+    public enum Status { COLLECTING, LIFTING, CHECKING, FOUND, NO_MATCH }
+    public volatile Status status = Status.COLLECTING;
+    public volatile long liftingStartedAt = 0;
+    public volatile int checkDone = 0;
+    public volatile int checkTotal = 0;
+    public volatile long foundSeed = 0;
     protected DataStorage dataStorage;
 
     public TimeMachine(DataStorage dataStorage) {
@@ -136,6 +149,8 @@ public class TimeMachine {
             }
         }
         Log.warn("tmachine.startLifting", dataList.size());
+        this.status = Status.LIFTING;
+        this.liftingStartedAt = System.currentTimeMillis();
 
         // You could first lift on 1L<<18 with %2 since that would be a smaller range
         // Then lift on 1<<19 with those 1<<18 fixed with % 4 and for nextInt(24)
@@ -168,7 +183,11 @@ public class TimeMachine {
             return true;
         });
 
-        this.structureSeeds = strutureSeedStream.parallel().collect(Collectors.toSet());
+        try {
+            this.structureSeeds = strutureSeedStream.parallel().collect(Collectors.toSet());
+        } finally {
+            if (this.status == Status.LIFTING) this.status = Status.COLLECTING;
+        }
 
         if (!this.structureSeeds.isEmpty()) {
             Log.warn("tmachine.structureSeedSearchFinished");
@@ -282,15 +301,29 @@ public class TimeMachine {
         int threads = Math.max(1, Math.min(32, Runtime.getRuntime().availableProcessors() - 1));
         Log.warn("tmachine.hashedSearchStart", seeds.length);
         long start = System.currentTimeMillis();
-        List<Long> found = FastHashedSeedSearch.search(seeds, hashed, threads, () -> this.shouldTerminate,
-                percent -> Log.warn("tmachine.hashedSearchProgress", percent));
+        this.checkDone = 0;
+        this.checkTotal = seeds.length;
+        this.status = Status.CHECKING;
+        AtomicInteger doneCounter = new AtomicInteger();
+        List<Long> found;
+        try {
+            found = FastHashedSeedSearch.search(seeds, hashed, threads, () -> this.shouldTerminate,
+                    percent -> Log.warn("tmachine.hashedSearchProgress", percent),
+                    done -> this.checkDone = done);
+        } finally {
+            if (this.status == Status.CHECKING) this.status = Status.COLLECTING;
+        }
         if (this.shouldTerminate) return false;
         logger.info("Hashed seed search over {} structure seeds took {} ms", seeds.length, System.currentTimeMillis() - start);
 
         if (found.isEmpty()) {
+            this.status = Status.NO_MATCH;
             Log.error("tmachine.hashedSearchNoResult");
             return false;
         }
+
+        this.foundSeed = found.get(0);
+        this.status = Status.FOUND;
 
         this.worldSeeds.clear();
         this.worldSeeds.addAll(found);
@@ -301,9 +334,23 @@ public class TimeMachine {
     }
 
     private void announceWorldSeed(long worldSeed) {
-        Log.printSeed("tmachine.foundWorldSeed", worldSeed);
-        Log.warn("tmachine.worldSeedSearchFinished");
-        logger.info("Found world seed {}", worldSeed);
+        Log.warn("==============================");
+        Log.printSeed("tmachine.foundWorldSeedBanner", worldSeed);
+        Log.warn("==============================");
+        try {
+            Path file = FabricLoader.getInstance().getGameDir().resolve("seedcracker-found-seed.txt");
+            String server = "unknown";
+            Minecraft client = Minecraft.getInstance();
+            if (client.getConnection() != null) {
+                server = client.getConnection().getConnection().getRemoteAddress().toString();
+            }
+            Files.writeString(file, LocalDateTime.now() + "  server: " + server + "  world seed: " + worldSeed + System.lineSeparator(),
+                    StandardOpenOption.CREATE, StandardOpenOption.APPEND);
+            Log.warn("tmachine.savedSeedToFile");
+        } catch (Exception e) {
+            logger.error("Couldn't save found seed to file", e);
+        }
+        logger.info("FOUND WORLD SEED: {}", worldSeed);
     }
 
     protected boolean pokeBiomes() {
@@ -457,7 +504,7 @@ public class TimeMachine {
 
         Set<Long> result = new HashSet<>();
         Log.debug("====================================");
-        Log.warn("tmachine.reduceSeeds", this.structureSeeds.size());
+        Log.verbose("tmachine.reduceSeeds", this.structureSeeds.size());
 
         if (this.pillarSeeds != null) {
             structureSeeds.forEach(seed -> {
@@ -508,7 +555,7 @@ public class TimeMachine {
             this.structureSeeds = result;
             return true;
         } else {
-            Log.warn("tmachine.failedReducing");
+            Log.verbose("tmachine.failedReducing");
         }
         return false;
     }
