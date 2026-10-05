@@ -20,8 +20,7 @@ import java.util.List;
 
 /**
  * Visits one of every structure type in a real 26.3 world and checks whether SeedCracker
- * detects it and has an outline to draw for it. Also checks the version selector and that
- * the mod lets go of the old level after a dimension change.
+ * detects it and has an outline to draw for it.
  */
 public class StructureHighlightTest implements FabricClientGameTest {
 
@@ -54,6 +53,18 @@ public class StructureHighlightTest implements FabricClientGameTest {
             sp.getConnection().waitForChunksRender();
             sp.getServer().runCommand("gamemode spectator @a");
 
+            // ---- command tree: list every path and flag doubles ----
+            context.runOnClient(mc -> {
+                var dispatcher = net.fabricmc.fabric.api.client.command.v2.ClientCommands.getActiveDispatcher();
+                var root = dispatcher.getRoot().getChild("seedcracker");
+                List<String> paths = new ArrayList<>();
+                List<String> dupes = new ArrayList<>();
+                walk(root, "/seedcracker", paths, dupes);
+                log("command paths: " + paths.size());
+                paths.stream().filter(p -> !p.contains(" version ")).forEach(p -> log("  " + p));
+                log("duplicate/case-double commands: " + (dupes.isEmpty() ? "NONE" : dupes));
+            });
+
             // ---- version selector ----
             List<String> versionReport = new ArrayList<>();
             context.runOnClient(mc -> {
@@ -77,7 +88,7 @@ public class StructureHighlightTest implements FabricClientGameTest {
             context.runOnClient(mc -> mc.getConnection().sendCommand("seedcracker version"));
             context.waitTicks(10);
             context.takeScreenshot("version_command");
-            context.setScreen(() -> new kaptainwutax.seedcrackerX.config.ConfigScreen().getConfigScreenByCloth(null));
+            context.setScreen(() -> new kaptainwutax.seedcrackerX.config.ConfigScreen().getConfigScreenByCloth(null, "Advanced"));
             context.waitTicks(10);
             context.takeScreenshot("version_menu");
             context.setScreen(() -> null);
@@ -166,6 +177,14 @@ public class StructureHighlightTest implements FabricClientGameTest {
         return (detected ? "DETECTED" : "MISSED") + (detected ? (renders ? ", outline drawn" : ", NOT drawn") : "") + "  at " + pos.toShortString();
     }
 
+    private static void walk(com.mojang.brigadier.tree.CommandNode<?> node, String path, List<String> paths, List<String> dupes) {
+        java.util.Set<String> seen = new java.util.HashSet<>();
+        if (node.getCommand() != null) paths.add(path);
+        for (var child : node.getChildren()) {
+            if (!seen.add(child.getName().toLowerCase())) dupes.add(path + " " + child.getName());
+            walk(child, path + " " + child.getName(), paths, dupes);
+        }
+    }
 
     /** count references to target reachable from SeedCracker's own objects (not the rest of the game) */
     private static int modRefsTo(Object target) {
