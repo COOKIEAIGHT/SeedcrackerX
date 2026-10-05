@@ -42,6 +42,7 @@ public class Config {
     public boolean debug = false;
     public boolean antiXrayBypass = true;
     private MCVersion version = MCVersion.latest();
+    private String serverVersion = null; // the version picked in the selector, e.g. "26.3"
     public boolean databaseSubmits = false;
     public boolean anonymusSubmits = false;
 
@@ -76,6 +77,19 @@ public class Config {
 
     public MCVersion getVersion() {
         return version;
+    }
+
+    /** the server version shown in the selector (e.g. "26.3"); falls back to the rules version for old configs */
+    public String getServerVersion() {
+        if (ServerVersions.isSupported(this.serverVersion)) return this.serverVersion;
+        return this.version == ServerVersions.RULES_FOR_NEWER ? ServerVersions.DEFAULT : this.version.name;
+    }
+
+    /** pick a server version; sets the matching structure rules */
+    public void setServerVersion(String serverVersion) {
+        if (!ServerVersions.isSupported(serverVersion)) return;
+        this.serverVersion = serverVersion;
+        this.setVersion(ServerVersions.rulesFor(serverVersion));
     }
 
     public void setVersion(MCVersion version) {

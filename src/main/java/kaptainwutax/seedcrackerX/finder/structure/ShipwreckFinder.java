@@ -207,7 +207,8 @@ public class ShipwreckFinder extends BlockFinder {
             if ((mutablePos.getX() & 0xf) == 0 && (mutablePos.getZ() & 0xf) == 0) {
                 RegionStructure.Data<?> data = Features.SHIPWRECK.at(ChunkPos.containing(mutablePos).x(), ChunkPos.containing(mutablePos).z());
 
-                if (SeedCracker.get().getDataStorage().addBaseData(data, DataAddedEvent.POKE_LIFTING)) {
+                SeedCracker.get().getDataStorage().addBaseData(data, DataAddedEvent.POKE_LIFTING);
+                { // always outline it, even if it was already known (e.g. reloaded or seen before)
                     this.cuboids.add(new Cuboid(box, ARGB.color(0, 255, 255)));
                     this.cuboids.add(new Cuboid(ChunkPos.containing(mutablePos).getWorldPosition().relative(Direction.UP, mutablePos.getY()), ARGB.color(0, 255, 255)));
                     return true;

@@ -64,7 +64,8 @@ public class DesertWellFinder extends PieceFinder {
 
             DesertWell.Data data = Features.DESERT_WELL.at(pos.getX(), pos.getZ());
 
-            if (SeedCracker.get().getDataStorage().addBaseData(data, DataAddedEvent.POKE_STRUCTURES)) {
+            SeedCracker.get().getDataStorage().addBaseData(data, DataAddedEvent.POKE_STRUCTURES);
+            { // always outline it, even if it was already known (e.g. reloaded or seen before)
                 this.cuboids.add(new Cuboid(pos.offset(-2, -1, -2), SIZE, ARGB.color(128, 128, 255)));
                 this.cuboids.add(new Cuboid(pos, ARGB.color(128, 128, 255)));
             }

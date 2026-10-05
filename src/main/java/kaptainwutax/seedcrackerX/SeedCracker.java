@@ -34,6 +34,9 @@ public class SeedCracker implements ModInitializer {
 
         FinderQueue.registerEvents();
 
+        // make outlines work with Iris shaders
+        kaptainwutax.seedcrackerX.render.NoDepthLayer.registerWithIris();
+
         ClientCommandRegistrationCallback.EVENT.register((dispatcher, registryAccess) -> ClientCommands.registerCommands(dispatcher));
 
         Database.fetchSeeds();

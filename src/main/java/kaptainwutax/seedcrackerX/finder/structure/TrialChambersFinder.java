@@ -210,12 +210,30 @@ public class TrialChambersFinder extends Finder {
             positions.forEach(pos -> {
                 RegionStructure.Data<?> data = Features.TRIAL_CHAMBERS.at(this.chunkPos.x(), this.chunkPos.z());
 
-                if (SeedCracker.get().getDataStorage().addBaseData(data, DataAddedEvent.POKE_STRUCTURES)) {
+                SeedCracker.get().getDataStorage().addBaseData(data, DataAddedEvent.POKE_STRUCTURES);
+                { // always outline it, even if it was already known (e.g. reloaded or seen before)
                     this.cuboids.add(new Cuboid(pos, pieceFinder.getLayout(), ARGB.color(170, 84, 3)));
                     this.cuboids.add(new Cuboid(chunkPos.getWorldPosition().offset(0, pos.getY(), 0), ARGB.color(170, 84, 3)));
                 }
             });
         });
+
+        // Trial spawners and vaults only ever generate in trial chambers, so outline those too.
+        // The end-room match above is what gives cracking data, but that room is rare and often not loaded.
+        try {
+            if (this.world.getChunk(this.chunkPos.x(), this.chunkPos.z()) instanceof net.minecraft.world.level.chunk.LevelChunk chunk) {
+                for (var blockEntity : List.copyOf(chunk.getBlockEntities().values())) {
+                    var state = blockEntity.getBlockState();
+                    if (state.is(Blocks.TRIAL_SPAWNER) || state.is(Blocks.VAULT)) {
+                        BlockPos pos = blockEntity.getBlockPos();
+                        this.cuboids.add(new Cuboid(pos, ARGB.color(170, 84, 3)));
+                        combinedResult.add(pos);
+                    }
+                }
+            }
+        } catch (Exception ignored) {
+            // chunk changed while we were reading it
+        }
 
         return combinedResult;
     }

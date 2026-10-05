@@ -90,6 +90,8 @@
   "fungus.gotStructureSeeds": "got structure seeds:",
   "fungus.usableAsWorldSeed": "this structure seed is also usable as worldseed",
   "database.success": "sent seed to database successfully",
-  "database.fail": "failed to send the seed to database"
-
+  "database.fail": "failed to send the seed to database",
+  "tmachine.hashedSearchStart": "Checking all %s possible seeds against the server's hashed seed. This can take a few minutes, keep playing...",
+  "tmachine.hashedSearchProgress": "Seed check %s%% done...",
+  "tmachine.hashedSearchNoResult": "None of the possible seeds matched the hashed seed. One of the structures is probably wrong, try /seedcracker data clear and find new structures."
 }

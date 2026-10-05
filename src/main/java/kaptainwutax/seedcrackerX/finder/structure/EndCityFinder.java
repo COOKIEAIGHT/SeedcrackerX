@@ -108,14 +108,16 @@ public class EndCityFinder extends Finder {
                     BlockPos posFix = pos.offset(1, 0, 1);
                     RegionStructure.Data<?> data = Features.END_CITY.at(posFix.getX()>>4, posFix.getZ()>>4);
 
-                    if (SeedCracker.get().getDataStorage().addBaseData(data, DataAddedEvent.POKE_STRUCTURES)) {
+                    SeedCracker.get().getDataStorage().addBaseData(data, DataAddedEvent.POKE_STRUCTURES);
+                    { // always outline it, even if it was already known (e.g. reloaded or seen before)
                         this.cuboids.add(new Cuboid(pos, pieceFinder.getLayout(), ARGB.color(153, 0, 153)));
                         this.cuboids.add(new Cuboid(posFix, ARGB.color(153, 0, 153)));
                     }
                 } else {
                     RegionStructure.Data<?> data = Features.END_CITY.at(this.chunkPos.x(), this.chunkPos.z());
 
-                    if (SeedCracker.get().getDataStorage().addBaseData(data, DataAddedEvent.POKE_STRUCTURES)) {
+                    SeedCracker.get().getDataStorage().addBaseData(data, DataAddedEvent.POKE_STRUCTURES);
+                    { // always outline it, even if it was already known (e.g. reloaded or seen before)
                         this.cuboids.add(new Cuboid(pos, pieceFinder.getLayout(), ARGB.color(153, 0, 153)));
                         this.cuboids.add(new Cuboid(pos, ARGB.color(153, 0, 153)));
                     }

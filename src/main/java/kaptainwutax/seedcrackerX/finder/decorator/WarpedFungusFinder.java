@@ -237,7 +237,8 @@ public class WarpedFungusFinder extends BlockFinder {
         WarpedFungus.Data data = Features.WARPED_FUNGUS.at(chunkPos.getMinBlockX(), chunkPos.getMinBlockZ(), BiomeFixer.swap(biome), newResult, bestFungus);
 
 
-        if (SeedCracker.get().getDataStorage().addBaseData(data, data::onDataAdded)) {
+        SeedCracker.get().getDataStorage().addBaseData(data, data::onDataAdded);
+        { // always outline it, even if it was already known (e.g. reloaded or seen before)
 
             for (BoundingBox box : renderBox) {
                 this.cuboids.add(new Cuboid(box, ARGB.color(0, 255, 255)));

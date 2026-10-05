@@ -72,7 +72,8 @@ public class MonumentFinder extends Finder {
                 ChunkPos monumentStart = new ChunkPos(this.chunkPos.x() + 1, this.chunkPos.z() + 1);
                 RegionStructure.Data<?> data = Features.MONUMENT.at(monumentStart.x(), monumentStart.z());
 
-                if (SeedCracker.get().getDataStorage().addBaseData(data, DataAddedEvent.POKE_STRUCTURES)) {
+                SeedCracker.get().getDataStorage().addBaseData(data, DataAddedEvent.POKE_STRUCTURES);
+                { // always outline it, even if it was already known (e.g. reloaded or seen before)
                     this.cuboids.add(new Cuboid(pos, pieceFinder.getLayout(), ARGB.color(0, 0, 255)));
                     this.cuboids.add(new Cuboid(monumentStart.getWorldPosition().offset(0, pos.getY(), 0), ARGB.color(0, 0, 255)));
                 }

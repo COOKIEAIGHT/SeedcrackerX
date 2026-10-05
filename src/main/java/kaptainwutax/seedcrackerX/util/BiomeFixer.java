@@ -39,6 +39,9 @@ public class BiomeFixer {
         COMPATREGISTRY.put("jagged_peaks", Biomes.TAIGA);
         COMPATREGISTRY.put("stony_peaks", Biomes.TAIGA);
         COMPATREGISTRY.put("mangrove_swamp", Biomes.SWAMP);
+        // biomes added after the seed library was written
+        COMPATREGISTRY.put("cherry_grove", Biomes.PLAINS);
+        COMPATREGISTRY.put("pale_garden", Biomes.DARK_FOREST);
 
         //unsure what to do with those, they'll return THE_VOID for now
         //dripstone_caves

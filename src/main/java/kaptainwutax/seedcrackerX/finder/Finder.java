@@ -90,6 +90,24 @@ public abstract class Finder {
         return false;
     }
 
+    // true if this finder belongs to the world the player is in right now.
+    // Finders from an old world (before going through a portal) would otherwise keep that whole world in memory.
+    public boolean isFromCurrentWorld() {
+        return this.world != null && this.world == mc.level;
+    }
+
+    // identifies what this finder outlines, so the same structure isn't outlined twice
+    public List<BlockPos> outlineKey() {
+        List<BlockPos> key = new ArrayList<>();
+        for (Cuboid cuboid : this.cuboids) key.add(cuboid.getCenterPos());
+        return key;
+    }
+
+    // read-only view for tests
+    public List<Cuboid> getCuboids() {
+        return java.util.Collections.unmodifiableList(this.cuboids);
+    }
+
     public boolean isUseless() {
         return this.cuboids.isEmpty();
     }

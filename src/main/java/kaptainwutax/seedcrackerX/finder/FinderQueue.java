@@ -27,7 +27,8 @@ public class FinderQueue {
 
     private final static FinderQueue INSTANCE = new FinderQueue();
     private static final Logger log = LoggerFactory.getLogger(FinderQueue.class);
-    private final ExecutorService SERVICE = Executors.newFixedThreadPool(5, Thread.ofPlatform().daemon().factory());
+    // low priority so scanning chunks doesn't make the game stutter
+    private final ExecutorService SERVICE = Executors.newFixedThreadPool(5, Thread.ofPlatform().daemon().priority(Thread.MIN_PRIORITY).name("SeedCrackerX-finder-", 0).factory());
 
     private static final RenderStateDataKey<Set<Cuboid>> CUBOID_SET_KEY = RenderStateDataKey.create(() -> "SeedCrackerX cuboid set");
 
@@ -91,7 +92,7 @@ public class FinderQueue {
 
     public List<Finder.Type> getActiveFinderTypes() {
         return Arrays.stream(Finder.Type.values())
-                .filter(type -> type.enabled.get())
+                .filter(type -> type.enabled.get() && kaptainwutax.seedcrackerX.Features.isAvailable(type))
                 .collect(Collectors.toList());
     }
 

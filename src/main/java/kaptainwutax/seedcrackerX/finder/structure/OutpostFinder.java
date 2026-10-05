@@ -71,8 +71,7 @@ public class OutpostFinder extends Finder {
 
     @Override
     public List<BlockPos> findInChunk() {
-        Biome biome = this.world.getNoiseBiome((this.chunkPos.x() << 2) + 2, 64, (this.chunkPos.z() << 2) + 2).value();
-        if (!Features.PILLAGER_OUTPOST.isValidBiome(BiomeFixer.swap(biome))) return new ArrayList<>();
+        if (!this.validBiomeNearby()) return new ArrayList<>();
 
         Map<JigsawFinder, List<BlockPos>> result = this.findInChunkPieces();
         List<BlockPos> combinedResult = new ArrayList<>();
@@ -84,7 +83,8 @@ public class OutpostFinder extends Finder {
             positions.forEach(pos -> {
                 RegionStructure.Data<?> data = Features.PILLAGER_OUTPOST.at(this.chunkPos.x(), this.chunkPos.z());
 
-                if (SeedCracker.get().getDataStorage().addBaseData(data, DataAddedEvent.POKE_LIFTING)) {
+                SeedCracker.get().getDataStorage().addBaseData(data, DataAddedEvent.POKE_LIFTING);
+                { // always outline it, even if it was already known (e.g. reloaded or seen before)
                     this.cuboids.add(new Cuboid(pos, pieceFinder.getLayout(), ARGB.color(170, 84, 3)));
                     this.cuboids.add(new Cuboid(chunkPos.getWorldPosition().offset(0, pos.getY(), 0), ARGB.color(170, 84, 3)));
                 }
@@ -92,6 +92,23 @@ public class OutpostFinder extends Finder {
         });
 
         return combinedResult;
+    }
+
+    /**
+     * The game checks the outpost's biome at its start point, but the tower can end up in a
+     * neighbouring chunk with a different biome (e.g. on a beach next to plains). So accept the
+     * chunk if it or any chunk around it has a biome outposts can spawn in.
+     */
+    private boolean validBiomeNearby() {
+        for (int dx = -1; dx <= 1; dx++) {
+            for (int dz = -1; dz <= 1; dz++) {
+                for (int quartY : new int[]{16, 64}) {
+                    Biome biome = this.world.getNoiseBiome(((this.chunkPos.x() + dx) << 2) + 2, quartY, ((this.chunkPos.z() + dz) << 2) + 2).value();
+                    if (Features.PILLAGER_OUTPOST.isValidBiome(BiomeFixer.swap(biome))) return true;
+                }
+            }
+        }
+        return false;
     }
 
     public Map<JigsawFinder, List<BlockPos>> findInChunkPieces() {

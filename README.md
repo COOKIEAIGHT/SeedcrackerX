@@ -171,6 +171,15 @@ If version of your mod is older than 2.13.1, use prefix
   
   Opens a [google sheet](https://docs.google.com/spreadsheets/d/1tuQiE-0leW88em9OHbZnH-RFNhVqgoHhIt9WQbeqqWw/edit?usp=sharing) that is maintained by the mod
   
+  ### Version Command
+  - `/seedcracker version`
+  - `/seedcracker version <version>`
+
+  Shows or sets the Minecraft version of the server, from 1.8 to 26.3 (also in the config screen). 1.21.4 to 26.3 use the same structure rules as 1.21.3.
+
+  ### Hashed seed
+  Servers send the client a hashed version of the world seed. Once the structure seed candidates are known, every candidate is checked against it (multi-threaded), so cracking no longer needs to get below 1000 candidates first.
+
 ## Video Tutorials
 
 Neil's:

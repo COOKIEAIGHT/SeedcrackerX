@@ -22,7 +22,9 @@ import kaptainwutax.seedcrackerX.finder.Finder;
 import kaptainwutax.seedcrackerX.structures.TrialChambers;
 
 import java.util.ArrayList;
+import java.util.EnumSet;
 import java.util.List;
+import java.util.Set;
 import java.util.function.Function;
 import java.util.function.Supplier;
 
@@ -47,8 +49,20 @@ public class Features {
     public static DeepDungeon DEEP_DUNGEON;
     public static WarpedFungus WARPED_FUNGUS;
 
+    /**
+     * Finders whose feature doesn't exist in the selected version (e.g. trial chambers before 1.21).
+     * They're skipped while scanning. The player's own on/off toggles are left alone, so switching
+     * back to a newer version brings them back.
+     */
+    public static final Set<Finder.Type> UNAVAILABLE = EnumSet.noneOf(Finder.Type.class);
+
+    public static boolean isAvailable(Finder.Type type) {
+        return !UNAVAILABLE.contains(type);
+    }
+
     public static void init(MCVersion version) {
         STRUCTURE_TYPES.clear();
+        UNAVAILABLE.clear();
 
         BURIED_TREASURE = safe(STRUCTURE_TYPES, version, Finder.Type.BURIED_TREASURE, BuriedTreasure::new);
         DESERT_PYRAMID = safe(STRUCTURE_TYPES, version, Finder.Type.DESERT_TEMPLE, DesertPyramid::new);
@@ -65,19 +79,22 @@ public class Features {
         DESERT_WELL = safe(Finder.Type.DESERT_WELL, version, DesertWell::new);
         EMERALD_ORE = safe(Finder.Type.EMERALD_ORE, version, EmeraldOre::new);
         DUNGEON = safe(Finder.Type.DUNGEON, version, Dungeon::new);
-        DEEP_DUNGEON = safe(Finder.Type.DUNGEON, version, DeepDungeon::new);
+        DEEP_DUNGEON = safe(Finder.Type.DUNGEON, version, DeepDungeon::new, false); // deep dungeons only exist from 1.18, normal dungeons still work
         WARPED_FUNGUS = safe(Finder.Type.WARPED_FUNGUS, version, WarpedFungus::new);
 
         STRUCTURE_TYPES.trimToSize();
     }
 
     private static <F extends Feature<?, ?>> F safe(Finder.Type finderType, MCVersion version, Function<MCVersion, F> lambda) {
+        return safe(finderType, version, lambda, true);
+    }
+
+    private static <F extends Feature<?, ?>> F safe(Finder.Type finderType, MCVersion version, Function<MCVersion, F> lambda, boolean markUnavailable) {
         try {
             return lambda.apply(version);
         } catch (Throwable t) {
-            if (finderType.enabled.get()) {
-                SeedCracker.LOGGER.error("Disabling: {} because it cant be loaded for version: {}", finderType.nameKey, version);
-                finderType.enabled.set(false);
+            if (markUnavailable && UNAVAILABLE.add(finderType)) {
+                SeedCracker.LOGGER.warn("Skipping {} because it doesn't exist in version {}", finderType.nameKey, version);
             }
             try {
                 return lambda.apply(MCVersion.latest());

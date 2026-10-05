@@ -43,6 +43,9 @@ public class Cuboid {
 
     public void render(PoseStack poseStack, SubmitNodeCollector submitter) {
         VoxelShape shape = Shapes.box(this.box.minX, this.box.minY, this.box.minZ, this.box.maxX, this.box.maxY, this.box.maxZ);
-        submitter.submitShapeOutline(poseStack, shape, NoDepthLayer.LINES_NO_DEPTH_LAYER, this.argb, 2, true);
+        // "xray" draws through walls, "on" only where you can see (the old code drew both through walls)
+        var layer = kaptainwutax.seedcrackerX.config.Config.get().render == kaptainwutax.seedcrackerX.config.Config.RenderType.XRAY
+                ? NoDepthLayer.LINES_NO_DEPTH_LAYER : net.minecraft.client.renderer.rendertype.RenderTypes.lines();
+        submitter.submitShapeOutline(poseStack, shape, layer, this.argb, 2, true);
     }
 }

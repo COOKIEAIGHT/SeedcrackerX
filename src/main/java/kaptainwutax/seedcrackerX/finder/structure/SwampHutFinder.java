@@ -45,7 +45,8 @@ public class SwampHutFinder extends AbstractTempleFinder {
             positions.forEach(pos -> {
                 RegionStructure.Data<?> data = Features.SWAMP_HUT.at(this.chunkPos.x(), this.chunkPos.z());
 
-                if (SeedCracker.get().getDataStorage().addBaseData(data, DataAddedEvent.POKE_LIFTING)) {
+                SeedCracker.get().getDataStorage().addBaseData(data, DataAddedEvent.POKE_LIFTING);
+                { // always outline it, even if it was already known (e.g. reloaded or seen before)
                     this.addRenderers(pieceFinder, pos, ARGB.color(255, 0, 255));
                 }
             });

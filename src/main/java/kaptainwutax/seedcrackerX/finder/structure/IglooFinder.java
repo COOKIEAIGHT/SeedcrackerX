@@ -57,7 +57,8 @@ public class IglooFinder extends Finder {
             positions.forEach(pos -> {
                 RegionStructure.Data<?> data = Features.IGLOO.at(this.chunkPos.x(), this.chunkPos.z());
 
-                if (SeedCracker.get().getDataStorage().addBaseData(data, DataAddedEvent.POKE_LIFTING)) {
+                SeedCracker.get().getDataStorage().addBaseData(data, DataAddedEvent.POKE_LIFTING);
+                { // always outline it, even if it was already known (e.g. reloaded or seen before)
                     this.cuboids.add(new Cuboid(pos, pieceFinder.getLayout(), ARGB.color(176, 207, 252)));
                     this.cuboids.add(new Cuboid(chunkPos.getWorldPosition().offset(0, pos.getY(), 0), ARGB.color(176, 207, 252)));
                 }

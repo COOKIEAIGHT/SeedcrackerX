@@ -15,6 +15,7 @@ import com.seedfinding.mcseed.lcg.LCG;
 import kaptainwutax.seedcrackerX.SeedCracker;
 import kaptainwutax.seedcrackerX.config.Config;
 import kaptainwutax.seedcrackerX.cracker.BiomeData;
+import kaptainwutax.seedcrackerX.cracker.FastHashedSeedSearch;
 import kaptainwutax.seedcrackerX.cracker.decorator.Decorator;
 import kaptainwutax.seedcrackerX.util.Database;
 import kaptainwutax.seedcrackerX.util.Log;
@@ -39,7 +40,8 @@ import java.util.stream.Stream;
 public class TimeMachine {
     private static final Logger logger = LoggerFactory.getLogger("timeMachine");
 
-    public ExecutorService SERVICE = Executors.newFixedThreadPool(10, Thread.ofPlatform().daemon().factory());
+    // shared pool (the old code made a new 10-thread pool on every reset and never closed the old one)
+    public static final ExecutorService SERVICE = Executors.newFixedThreadPool(10, Thread.ofPlatform().daemon().name("SeedCrackerX-cracker-", 0).factory());
     private final LCG inverseLCG = LCG.JAVA.combine(-2);
     public boolean isRunning = false;
     public boolean shouldTerminate = false;
@@ -259,8 +261,58 @@ public class TimeMachine {
         return true;
     }
 
+    // remembers which set of structure seeds was already checked against the hashed seed
+    private long lastFastSearchKey = 0;
+
+    /**
+     * check every structure seed against the hashed seed the server sent.
+     * The original mod only did this with under 1000 structure seeds.
+     * @return true if a world seed was found, false if not, null if this exact set was already checked
+     */
+    protected Boolean fastHashedSeedSearch() {
+        if (this.dataStorage.hashedSeedData == null || this.dataStorage.hashedSeedData.getHashedSeed() == 0) return null;
+        long hashed = this.dataStorage.hashedSeedData.getHashedSeed();
+        long[] seeds = this.structureSeeds.stream().mapToLong(Long::longValue).toArray();
+
+        long key = hashed * 31 + seeds.length;
+        for (long s : seeds) key ^= s * 0x9E3779B97F4A7C15L;
+        if (key == this.lastFastSearchKey) return null;
+        this.lastFastSearchKey = key;
+
+        int threads = Math.max(1, Math.min(32, Runtime.getRuntime().availableProcessors() - 1));
+        Log.warn("tmachine.hashedSearchStart", seeds.length);
+        long start = System.currentTimeMillis();
+        List<Long> found = FastHashedSeedSearch.search(seeds, hashed, threads, () -> this.shouldTerminate,
+                percent -> Log.warn("tmachine.hashedSearchProgress", percent));
+        if (this.shouldTerminate) return false;
+        logger.info("Hashed seed search over {} structure seeds took {} ms", seeds.length, System.currentTimeMillis() - start);
+
+        if (found.isEmpty()) {
+            Log.error("tmachine.hashedSearchNoResult");
+            return false;
+        }
+
+        this.worldSeeds.clear();
+        this.worldSeeds.addAll(found);
+        for (long worldSeed : found) {
+            announceWorldSeed(worldSeed);
+        }
+        return true;
+    }
+
+    private void announceWorldSeed(long worldSeed) {
+        Log.printSeed("tmachine.foundWorldSeed", worldSeed);
+        Log.warn("tmachine.worldSeedSearchFinished");
+        logger.info("Found world seed {}", worldSeed);
+    }
+
     protected boolean pokeBiomes() {
         if (this.structureSeeds.isEmpty() || this.worldSeeds.size() == 1) return false;
+
+        // try the hashed seed first, on any number of structure seeds
+        Boolean fast = fastHashedSeedSearch();
+        if (Boolean.TRUE.equals(fast)) return true;
+
         if (this.structureSeeds.size() > 1000) return false;
 
         Log.debug("====================================");
@@ -311,27 +363,7 @@ public class TimeMachine {
 
         }
 
-        if (this.dataStorage.hashedSeedData != null && this.dataStorage.hashedSeedData.getHashedSeed() != 0) {
-            Log.warn("tmachine.hashedSeedWorldSeedSearch");
-            for (long structureSeed : this.structureSeeds) {
-                WorldSeed.fromHash(structureSeed, this.dataStorage.hashedSeedData.getHashedSeed()).forEach(worldSeed -> {
-                    this.worldSeeds.add(worldSeed);
-                    Log.printSeed("tmachine.foundWorldSeed", worldSeed);
-                });
-
-                if (this.shouldTerminate) {
-                    return false;
-                }
-            }
-
-            if (!this.worldSeeds.isEmpty()) {
-                Log.warn("tmachine.worldSeedSearchFinished");
-                return true;
-            } else {
-                this.dataStorage.hashedSeedData = null;
-                Log.error("tmachine.noResultsRevertingToBiomes");
-            }
-        }
+        // the hashed seed check now happens in fastHashedSeedSearch() at the top of pokeBiomes()
 
         this.dataStorage.biomeSeedData.dump();
         if (this.dataStorage.notEnoughBiomeData()) {

@@ -82,7 +82,8 @@ public class BuriedTreasureFinder extends BlockFinder {
         result.forEach(pos -> {
             RegionStructure.Data<?> data = Features.BURIED_TREASURE.at(this.chunkPos.x(), this.chunkPos.z());
 
-            if (SeedCracker.get().getDataStorage().addBaseData(data, DataAddedEvent.POKE_STRUCTURES)) {
+            SeedCracker.get().getDataStorage().addBaseData(data, DataAddedEvent.POKE_STRUCTURES);
+            { // always outline it, even if it was already known (e.g. reloaded or seen before)
                 this.cuboids.add(new Cuboid(pos, ARGB.color(255, 255, 0)));
             }
         });

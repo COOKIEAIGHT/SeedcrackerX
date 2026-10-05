@@ -50,7 +50,8 @@ public class EndGatewayFinder extends BlockFinder {
 
                 EndGateway.Data data = Features.END_GATEWAY.at(pos.getX(), pos.getZ(), height);
 
-                if (SeedCracker.get().getDataStorage().addBaseData(data, DataAddedEvent.POKE_STRUCTURES)) {
+                SeedCracker.get().getDataStorage().addBaseData(data, DataAddedEvent.POKE_STRUCTURES);
+                { // always outline it, even if it was already known (e.g. reloaded or seen before)
                     this.cuboids.add(new Cuboid(pos.offset(-1, -2, -1), new Vec3i(3, 5, 3), ARGB.color(102, 102, 210)));
                 }
             }

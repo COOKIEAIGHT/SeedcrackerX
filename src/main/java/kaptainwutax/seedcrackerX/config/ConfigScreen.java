@@ -1,6 +1,5 @@
 package kaptainwutax.seedcrackerX.config;
 
-import com.seedfinding.mccore.version.MCVersion;
 import kaptainwutax.seedcrackerX.SeedCracker;
 import kaptainwutax.seedcrackerX.command.DatabaseCommand;
 import kaptainwutax.seedcrackerX.cracker.HashedSeedData;
@@ -17,7 +16,6 @@ import net.minecraft.network.chat.Component;
 import net.minecraft.network.chat.HoverEvent;
 import net.minecraft.resources.Identifier;
 
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
 
@@ -26,20 +24,7 @@ public class ConfigScreen {
 
     private static final Config config = Config.get();
 
-    private ArrayList<MCVersion> getSupportedVersions() {
-        ArrayList<MCVersion> newerVersions = new ArrayList<>();
-        for (MCVersion version : MCVersion.values()) {
-            if (version.isOlderThan(MCVersion.v1_8)) continue;
-            newerVersions.add(version);
-        }
-        return newerVersions;
-    }
 
-    private MCVersion mcVersionFromString(String version) {
-        MCVersion mcVersion = MCVersion.fromString(version);
-        if (mcVersion == null) return MCVersion.latest();
-        return mcVersion;
-    }
 
     public Screen getConfigScreenByCloth(Screen parent) {
 
@@ -64,11 +49,14 @@ public class ConfigScreen {
                 .withUnderlined(true)
                 .withItalic(true)))
                 .build());
-        settings.addEntry(eb.startDropdownMenu(Component.translatable("settings.version"), DropdownMenuBuilder.TopCellElementBuilder.of(config.getVersion(), this::mcVersionFromString))
-                .setSelections(getSupportedVersions())
+        settings.addEntry(eb.startDropdownMenu(Component.translatable("settings.version"),
+                        DropdownMenuBuilder.TopCellElementBuilder.of(config.getServerVersion(), v -> v))
+                .setSelections(ServerVersions.all())
                 .setSuggestionMode(false)
-                .setDefaultValue(config.getVersion())
-                .setSaveConsumer(config::setVersion)
+                .setDefaultValue(ServerVersions.DEFAULT)
+                .setTooltip(Component.literal("The Minecraft version of the server (" + ServerVersions.range() + ")."),
+                        Component.literal("1.21.4 to " + ServerVersions.DEFAULT + " use the same structure rules as 1.21.3."))
+                .setSaveConsumer(config::setServerVersion)
                 .build());
 
         settings.addEntry(eb.startTextDescription(Component.literal("==============")).build());
